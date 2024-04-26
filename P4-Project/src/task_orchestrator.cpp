@@ -7,7 +7,7 @@
 void Orchestrator::begin()
 {
     //
-    int SoC_value = get_SoC();
+    // int SoC_value = get_SoC();
 }
 
 int Orchestrator::make_measurements(uint8_t tempPin)
@@ -24,13 +24,15 @@ int Orchestrator::sleep(uint16_t minutes)
 {
     unsigned long sleep_time = minutes;
     LowPower.deepSleep(sleep_time);
+    return sleep_time;
 }
+
 int Orchestrator::get_SoC()
 {
     pinMode(14, INPUT);
     return digitalRead(14);
 }
 
-int Orchestrator::handle_uplink()
-{
-}
+// int Orchestrator::handle_uplink()
+// {
+// }
