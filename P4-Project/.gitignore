@@ -3,6 +3,8 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-src/main.cpp
-S3-Data-Analyst/config.json
+
 include/arduino_secrets.h
+src/main.cpp
+
+S3-Data-Analyst/config.json
