@@ -7,14 +7,15 @@ LoRaWAN::LoRaWAN(const String& eui, const String& key) : appEui(eui), appKey(key
     while (1);
   }
   Serial.println("Modem initialized successfully");
+
+  // Set the appEUi and appKey
+  this->appEui = eui;
+  this->appKey = key;
 }
 
 
 void LoRaWAN::setup() {
-  Serial.begin(115200);
-  while (!Serial);                              // Wait for Serial To Initialize
-  
-  if (!modem.joinOTAA(appEui, appKey)) {        // Join Given Network Via OTAA
+  if (!modem.joinOTAA(this->appEui, this->appKey)) {        // Join Given Network Via OTAA
     Serial.println("Joining network failed.");
     while (1);
   }
