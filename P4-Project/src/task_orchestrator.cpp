@@ -10,9 +10,9 @@ void Orchestrator::begin()
     int SoC_value = get_SoC();
 }
 
-int make_measurement()
+int Orchestrator::make_measurements(uint8_t tempPin)
 {
-    SensorModule sensorModule(A1, 500, 200, 17); // A1: Moisture sensor pin, 500: Dry reading, 200: Wet reading, 17: DS18B20 digital data pin
+    SensorModule sensorModule(A1, 500, 200, tempPin); // A1: Moisture sensor pin, 500: Dry reading, 200: Wet reading, 17: DS18B20 digital data pin
 
     float temperature = sensorModule.getTemperature();
     int moisturePercentage = sensorModule.getMoisture();
@@ -20,16 +20,17 @@ int make_measurement()
     return (moisturePercentage, temperature);
 }
 
-int sleep(unsigned int seconds)
+int Orchestrator::sleep(uint16_t minutes)
 {
-    unsigned long sleep_time = seconds * 1000;
+    unsigned long sleep_time = minutes;
     LowPower.deepSleep(sleep_time);
 }
-int get_SoC()
+int Orchestrator::get_SoC()
 {
     pinMode(14, INPUT);
     return digitalRead(14);
 }
-int handle_uplink()
+
+int Orchestrator::handle_uplink()
 {
 }

@@ -11,10 +11,13 @@
 class Orchestrator
 {
 private:
+    int tempPin;
+    unsigned int seconds;
+
 public:
     int get_SoC();
-    int sleep();
-    int make_measurements();
+    int sleep(unsigned int seconds);
+    int make_measurements(int tempPin);
     int handle_uplink();
     void begin();
     void continue1();
