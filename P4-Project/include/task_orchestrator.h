@@ -11,10 +11,6 @@
 class Orchestrator
 {
 private:
-    SensorModule Sensors;
-    LoRaWAN LoRa;
-    DataManager NVStorage;
-
 public:
     int get_SoC();
     int sleep();
