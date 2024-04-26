@@ -19,6 +19,9 @@ private:
     
     JsonDocument SWC;
 
+    // keep track of key of initial step of SWC
+    uint8_t init_step;
+
     // int keeping track of which step to use of the SWC
     uint8_t SWC_step_num;
     
