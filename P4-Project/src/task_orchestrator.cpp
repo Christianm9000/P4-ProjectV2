@@ -10,14 +10,14 @@ void Orchestrator::begin()
     // int SoC_value = get_SoC();
 }
 
-int Orchestrator::make_measurements(uint8_t tempPin)
+std::pair<int, float> Orchestrator::make_measurements(uint8_t tempPin)
 {
-    SensorModule sensorModule(A1, 500, 200, tempPin); // A1: Moisture sensor pin, 500: Dry reading, 200: Wet reading, 17: DS18B20 digital data pin
+    SensorModule sensorModule(A1, 500, 200, tempPin); 
 
     float temperature = sensorModule.getTemperature();
     int moisturePercentage = sensorModule.getMoisture();
 
-    return (moisturePercentage, temperature);
+    return std::make_pair(moisturePercentage, temperature);
 }
 
 int Orchestrator::sleep(uint16_t minutes)
