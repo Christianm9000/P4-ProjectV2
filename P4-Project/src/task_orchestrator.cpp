@@ -1,4 +1,5 @@
 #include "task_orchestrator.h"
+#include "data_manager.h"
 
 /*
 
@@ -10,16 +11,16 @@ void Orchestrator::begin()
     // int SoC_value = get_SoC();
 }
 
-std::pair<int, float> Orchestrator::make_measurements(uint8_t tempPin)
+void Orchestrator::make_measurements(uint8_t tempPin, int moistPin, int dryValue, int wetValue)
 {
-    SensorModule sensorModule(A1, 500, 200, tempPin); 
+    SensorModule sensorModule(moistPin, dryValue, wetValue, tempPin); 
 
     float temperature = sensorModule.getTemperature();
     int moisturePercentage = sensorModule.getMoisture();
 
-    return std::make_pair(moisturePercentage, temperature);
+    DataManager dataManager; // Create an instance of DataManager
+    dataManager.append_data(moisturePercentage, temperature); // Call append_data
 }
-
 int Orchestrator::sleep(uint16_t minutes)
 {
     unsigned long sleep_time = minutes;
