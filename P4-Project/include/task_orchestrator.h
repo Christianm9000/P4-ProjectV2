@@ -17,7 +17,7 @@ private:
 public:
     int get_SoC();
     int sleep(uint16_t minutes);
-    int make_measurements(uint8_t tempPin);
+    std::pair<int, float> make_measurements(uint8_t tempPin);
     int handle_uplink();
     void begin();
     void continue1();
