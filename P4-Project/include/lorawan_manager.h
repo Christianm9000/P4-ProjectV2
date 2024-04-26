@@ -9,6 +9,9 @@ private:
   String appEui;
   String appKey;
   String dataToSend;
+  int TXPower;
+  int SpreadingFactor;
+  bool ADR;
 
 public:
   // Constructor to initialize the modem with the regional settings
@@ -17,14 +20,11 @@ public:
   // Initialize serial communication and join the LoRaWAN network
   void setup();
 
-  // Store data to be sent to the LoRa network
-  int insert_data(const String& data);
-
   // Configure ADR, spreading factor, and TX power
   int set_config(bool adr, int spreadingFactor, int power);
 
   // Send data over LoRaWAN and check for downlink messages
-  int send_data();
+  int send_data(const String& data);
 
   // Retrieve data received from downlink
   String retrieve_data();

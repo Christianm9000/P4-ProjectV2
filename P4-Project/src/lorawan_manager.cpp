@@ -9,39 +9,46 @@ LoRaWAN::LoRaWAN(const String& eui, const String& key) : appEui(eui), appKey(key
   Serial.println("Modem initialized successfully");
 }
 
+
 void LoRaWAN::setup() {
   Serial.begin(115200);
-  while (!Serial);
+  while (!Serial);                              // Wait for Serial To Initialize
   
-  Serial.print("Module version: ");
-  Serial.println(modem.version());
-  Serial.print("Device EUI: ");
-  Serial.println(modem.deviceEUI());
-
-  if (!modem.joinOTAA(appEui, appKey)) {
-    Serial.println("Joining network failed. Move near a window and retry.");
+  if (!modem.joinOTAA(appEui, appKey)) {        // Join Given Network Via OTAA
+    Serial.println("Joining network failed.");
     while (1);
   }
 
-  modem.minPollInterval(60);
+  Serial.println("Network Joined!");
+  modem.minPollInterval(60);                    // The Amount of Seconds between checking for downlink. Works as a cooldown. If checked device must wait 60 sec to check again.
 }
 
-int LoRaWAN::insert_data(const String& data) {
-  dataToSend = data;
-  return 0; // Success
-}
 
 int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
-  modem.setADR(adr);
+  // Set Variables
+  this->TXPower = power;
+  this->SpreadingFactor = spreadingFactor;
+  this->ADR = adr;
+
+  // Enable or Disable ADR
+  modem.setADR(this->ADR);
+
   //modem.setSpreadingFactor(spreadingFactor);
   //modem.setTxPower(power);
   return 0; // Success
 }
 
-int LoRaWAN::send_data() {
+
+int LoRaWAN::send_data(const String& data) {
+  // Declare Data to send and error variable
+  this->dataToSend = data;
   int err;
+
+  // Start Package Construction and Add Data
   modem.beginPacket();
   modem.print(dataToSend);
+
+  // Send Data and receive Return Code
   err = modem.endPacket(true);
   if (err > 0) {
     Serial.println("Message sent correctly!");
@@ -55,14 +62,18 @@ int LoRaWAN::send_data() {
   }
 }
 
+
 String LoRaWAN::retrieve_data() {
+  // Check if Any Data is Available
   if (!modem.available()) {
     return ""; // No data received
   }
 
   String receivedData;
   while (modem.available()) {
-    receivedData += (char)modem.read();
+    receivedData += (char)modem.read();          // Reads Byte for Byte of the buffer until no more data is available.
   }
+  Serial.println(receivedData);
+
   return receivedData;
 }
