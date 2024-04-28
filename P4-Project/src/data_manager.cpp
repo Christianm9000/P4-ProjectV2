@@ -176,4 +176,4 @@ uint8_t* DataManager::return_data() {
     }
 
     return data_array_ptr;
-};
+}
