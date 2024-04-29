@@ -23,7 +23,7 @@ public:
   int set_config(bool adr, int spreadingFactor, int power);
 
   // Send data over LoRaWAN and check for downlink messages
-  int send_data(uint8_t* data);
+  int send_data(uint8_t* data, uint8_t size);
 
   // Retrieve data received from downlink
   String retrieve_data();

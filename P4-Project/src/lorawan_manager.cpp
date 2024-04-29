@@ -40,7 +40,7 @@ int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
 }
 
 
-int LoRaWAN::send_data(uint8_t* data) {
+int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
   // Declare Data to send and error variable
   int err;
 
@@ -53,9 +53,7 @@ int LoRaWAN::send_data(uint8_t* data) {
 
   // Check Send Status Code
   if (err > 0) {
-    Serial.println("Message sent correctly!");
   } else {
-    Serial.println("Error sending message");
     return 0; // Send failed
   }
 
@@ -63,17 +61,14 @@ int LoRaWAN::send_data(uint8_t* data) {
   for (unsigned int j = 0; j<2; j++){
     delay(5000);
     if (!modem.available()) {
-      Serial.println("No downlink message received at this time.");
       if (j == 1) {
         return 1;
       }
     }
     else {
-      Serial.println("Downlink Received.");
       return 2;
     }
   }
-
 }
 
 
