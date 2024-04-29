@@ -2,6 +2,7 @@
 #define LORAWAN_MANAGER_H
 
 #include <MKRWAN.h>
+#include <utility>
 
 class LoRaWAN {
 private:
@@ -16,7 +17,7 @@ public:
   // Constructor to initialize the modem with the regional settings
   LoRaWAN(const String& eui, const String& key);
 
-  // Initialize serial communication and join the LoRaWAN network
+  // Join LoRaWAN network with the defined AppEUI and AppKEY
   void setup();
 
   // Configure ADR, spreading factor, and TX power
@@ -26,7 +27,7 @@ public:
   int send_data(uint8_t* data, uint8_t size);
 
   // Retrieve data received from downlink
-  String retrieve_data();
+  std::pair<char*, int> retrieve_data();
 };
 
 #endif // LORAWAN_MANAGER_H

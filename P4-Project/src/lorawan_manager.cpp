@@ -31,64 +31,95 @@ int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
   this->SpreadingFactor = spreadingFactor;
   this->ADR = adr;
 
-  // Enable or Disable ADR
-  //modem.setADR(this->ADR);
+  // Declare Response Variable
+  int err;
+
+  // Enable or Disable ADR and Set Response Variable
+  if(modem.setADR(this->ADR)) {
+    err = 1;
+  }
+  else {
+    err = 0;
+  }
 
   //modem.setSpreadingFactor(spreadingFactor);
   //modem.setTxPower(power);
-  return 0; // Success
+
+  // Return Success 1 or Failed 0
+  return err;
 }
 
 
 int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
-  // Declare Data to send and error variable
+  // Declare Error Variable
   int err;
 
   // Start Package Construction and Add Data
   modem.beginPacket();
-  modem.write(data, sizeof(data));
+  modem.write(data, size);
 
   // Send Data and receive Return Code
   err = modem.endPacket(true);
 
-  // Check Send Status Code
-  if (err > 0) {
-  } else {
-    return 0; // Send failed
-  }
+  if (err != 0) {
 
-  //Delay to Allow Data Downlink
-  for (unsigned int j = 0; j<2; j++){
-    delay(5000);
-    if (!modem.available()) {
-      if (j == 1) {
-        return 1;
+    //Delay to Allow Data Downlink
+    for (int j = 0; j<2; j++) { // Check twice with 5 second delay
+      delay(5000);
+      if (!modem.available()) {
+        if (j == 1) {
+          return 1; // If no data is received after second check, then return 1 = message sent, no downlink.
+        }
+      }
+      else {
+        return 2; // Else return 2 = Message sent, downlink received.
       }
     }
-    else {
-      return 2;
-    }
   }
+  return 0; // Send failed
 }
 
 
-String LoRaWAN::retrieve_data() {
-  // Check if Any Data is Available
+std::pair<char*, int> LoRaWAN::retrieve_data() {
+  // Check if any data is available
   if (!modem.available()) {
-    return ""; // No data received
+      return std::pair<char*, int>(nullptr, 0); // No data received. Return nullptr and 0
   }
 
-  char rcv[64];
+  // Check Packet Size and return nullptr if no data is available
+  int packet_size = modem.parsePacket();
+
+  if (packet_size <= 0) {
+    return std::pair<char*, int>(nullptr, 0); // No packet or read error
+  }
+
+  // Allocate Memory and Declare sleep offset Variable
+  char* rcv = new char[packet_size + 1];  // Allocate Memory for SWC plus null terminator
+  int offset = 0; // Sleep offset before SWC start. Measured in minutes
+
   int i = 0;
-  while (modem.available()) {
-    rcv[i++] = (char)modem.read();
-  }
-  Serial.print("Received: ");
-  for (unsigned int j = 0; j < i; j++) {
-    Serial.print(rcv[j] >> 4, HEX);
-    Serial.print(rcv[j] & 0xF, HEX);
-    Serial.print(" ");
+  int packet_switch = 0; // 0 if we are still reading the SWC. 1 if we are reading the offset
+  while (modem.available() && i < packet_size) { // Ensure we do not overflow the buffer
+
+    // Add character to SWC cycle char array
+    if (packet_switch == 0) {
+
+      // Switch to offset calculation when the SWC cycle has been constructed.
+      if ((char)modem.peek() == '}') {
+        packet_switch = 1;
+      }
+
+      rcv[i++] = (char)modem.read();  // Read each byte as a character
+    }
+
+    // Add to the offset in case we are done with the SWC
+    else {
+      // Create offset in minutes by left shifting number after each read to continue adding. Necessary as we can only read the next byte from the buffer.
+      offset = offset*10 + (int)modem.read();
+    }
   }
 
-  return rcv;
+  rcv[i] = '\0'; // Add string terminator if the char array is converted.
+  
+  return std::pair<char*, int>(rcv, offset);
 }
