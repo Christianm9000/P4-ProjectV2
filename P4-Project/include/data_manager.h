@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>        // docs: https://arduinojson.org/v7/tutorial/deserialization/
 #include <vector>
+#include <utility>
 
 
 class DataManager {
@@ -44,12 +45,14 @@ private:
 public:
 
     // Constructor
-    DataManager(uint8_t first_step = 0, bool set_verbose = false, float temp_data_offset = -12.0);
+    DataManager(bool set_verbose = false, float temp_data_offset = -12.0);
 
     // Destructor
     ~DataManager(); 
 
-    uint8_t set_SWC(const char json[]);
+    uint8_t reset(bool rst_SWC = false);
+
+    uint8_t set_SWC(const char *json, uint8_t first_step = 0);
 
     uint8_t get_SWC_state(uint8_t& command, uint16_t& sleep_mins);
 
@@ -57,7 +60,7 @@ public:
 
     uint8_t append_data(int soil_moist_data, float air_temp_data);
     
-    uint8_t* return_data();
+    std::pair<uint8_t*, uint8_t> return_data();
 };
 
 #endif // DATA_MANAGER_H

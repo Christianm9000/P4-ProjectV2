@@ -1,24 +1,45 @@
 #include "data_manager.h"
 
-DataManager::DataManager(uint8_t first_step, bool set_verbose, float temp_data_offset) {
+DataManager::DataManager(bool set_verbose, float temp_data_offset) {
     // Constructor
-    init_step = first_step;     // defaults to 1, meaning start at beginning of SWC - used in "confirm_SWC_state()"
-    SWC_step_num = first_step;  // defaults to 1, meaning start at beginning of SWC
     offset = temp_data_offset;  // defaults to -12.0, meaning temperature-readings should be in range [-20.0, 43.5] degrees Celsius
     verbose = set_verbose;      // defaults to false
     
 }
 
+// Destructor - clear 'compressed_data' vector. Simple attributes are cleared automatically (int, bool, etc).
+// This method is automatically called if the DataManager-object goes out of scope or is explicitly deleted.
 DataManager::~DataManager() {
-    // Destructor
+    // Deallocate memory for the compressed data vector
+    compressed_data.clear();
 }
 
+// reset all attributes and make the object ready for a new SWC.
+// if rst_SWC flag is set to true, clear the SWC as well. Only set if intention is full reset 
+uint8_t DataManager::reset(bool rst_SWC) {
+
+    if (verbose) {
+        Serial.println("Reseting the DataManager instance");
+        Serial.println();
+    }
+
+    if (rst_SWC) {
+        SWC.clear();
+    }
+    compressed_data.clear();    // clear stored data
+    num_samples = 0;
+    SWC_step_num = init_step;   // point to first step of SWC
+    
+    return 1;   // success
+}
 
 // takes a serialized json-object containing a SWC.
 // returns 1 in case of success, 0 in case of failure
-uint8_t DataManager::set_SWC(const char *json) {
+uint8_t DataManager::set_SWC(const char *json, uint8_t first_step) {
+
+    init_step = first_step;     // defaults to 0, meaning start at beginning of SWC - used in "confirm_SWC_state()"
+    SWC_step_num = first_step;  // defaults to 0, meaning start at beginning of SWC
     JsonDocument doc;
-    
     deserializeJson(doc, json);
     SWC = doc;
 
@@ -131,6 +152,9 @@ uint8_t DataManager::append_data(int soil_moist_data, float air_temp_data) {
         }
         else {
             // create new back with .push_back()
+            if (stored_bits > 0) {  // remove the empty back before pushing onto the new one
+                compressed_data.pop_back();
+            }
             compressed_data.push_back(current_value);
         }
         num_samples++;
@@ -146,15 +170,18 @@ uint8_t DataManager::append_data(int soil_moist_data, float air_temp_data) {
         Serial.println();
     }
     return 1;
-};
+}
 
 
-// Returns a pointer to an array containing the compressed data in a uint8_t array.
+// Returns a pointer to an array containing the compressed data in a uint8_t array and the size of the array, in a std::pair.
 // remember to dealloc via 'delete[] returned_pointer' when done using it.
-uint8_t* DataManager::return_data() {
+// Throws a 'const std::bad_alloc' error if dynamic memory allocation via 'new' fails.
+std::pair<uint8_t*, uint8_t> DataManager::return_data() {
     uint16_t used_bits = num_samples * 7;
     uint8_t used_bytes = uint8_t(used_bits / 8);
-    if ((used_bits % 8) > 0) { used_bytes++; }
+    if ((used_bits % 8) > 0) {
+        used_bytes++;
+    }
 
     uint8_t* data_array_ptr = new uint8_t[used_bytes];  // allocate on heap - persists after scope is exited
 
@@ -163,8 +190,8 @@ uint8_t* DataManager::return_data() {
         Serial.println("data_array_ptr: ");
     }
 
-    for (int i = 0; i < used_bytes; i++) {
-        data_array_ptr[i] = compressed_data.at(i);
+    for (int i = 0; i < used_bytes; i++) {          // copy the data from start to finish
+        data_array_ptr[i] = compressed_data.at(i);  // instead of the LIFO .back(), .pop_back() - combo
         if (verbose) {
             Serial.print(data_array_ptr[i], BIN);
             Serial.print(" ");
@@ -174,6 +201,6 @@ uint8_t* DataManager::return_data() {
     if (verbose) {
         Serial.println("");
     }
-
-    return data_array_ptr;
+    
+    return std::pair<uint8_t*, uint8_t>(data_array_ptr, used_bytes);
 }

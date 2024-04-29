@@ -15,13 +15,13 @@ LoRaWAN::LoRaWAN(const String& eui, const String& key) : appEui(eui), appKey(key
 
 
 void LoRaWAN::setup() {
-  if (!modem.joinOTAA(this->appEui, this->appKey)) {        // Join Given Network Via OTAA
+  if (!modem.joinOTAA(this->appEui, this->appKey)) {            // Join Given Network Via OTAA
     Serial.println("Joining network failed.");
     while (1);
   }
 
   Serial.println("Network Joined!");
-  modem.minPollInterval(60);                    // The Amount of Seconds between checking for downlink. Works as a cooldown. If checked device must wait 60 sec to check again.
+  modem.minPollInterval(60);              // The Amount of Seconds between checking for downlink. Works as a cooldown. If checked device must wait 60 sec to check again.
 }
 
 
@@ -32,7 +32,7 @@ int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
   this->ADR = adr;
 
   // Enable or Disable ADR
-  modem.setADR(this->ADR);
+  //modem.setADR(this->ADR);
 
   //modem.setSpreadingFactor(spreadingFactor);
   //modem.setTxPower(power);
@@ -40,26 +40,34 @@ int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
 }
 
 
-int LoRaWAN::send_data(const String& data) {
+int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
   // Declare Data to send and error variable
-  this->dataToSend = data;
   int err;
 
   // Start Package Construction and Add Data
   modem.beginPacket();
-  modem.print(dataToSend);
+  modem.write(data, sizeof(data));
 
   // Send Data and receive Return Code
   err = modem.endPacket(true);
+
+  // Check Send Status Code
   if (err > 0) {
-    Serial.println("Message sent correctly!");
-    if (modem.available()) {
-      return 2; // Sent correctly, downlink received
-    }
-    return 1; // Sent correctly, no downlink
   } else {
-    Serial.println("Error sending message");
     return 0; // Send failed
+  }
+
+  //Delay to Allow Data Downlink
+  for (unsigned int j = 0; j<2; j++){
+    delay(5000);
+    if (!modem.available()) {
+      if (j == 1) {
+        return 1;
+      }
+    }
+    else {
+      return 2;
+    }
   }
 }
 
@@ -70,11 +78,17 @@ String LoRaWAN::retrieve_data() {
     return ""; // No data received
   }
 
-  String receivedData;
+  char rcv[64];
+  int i = 0;
   while (modem.available()) {
-    receivedData += (char)modem.read();          // Reads Byte for Byte of the buffer until no more data is available.
+    rcv[i++] = (char)modem.read();
   }
-  Serial.println(receivedData);
+  Serial.print("Received: ");
+  for (unsigned int j = 0; j < i; j++) {
+    Serial.print(rcv[j] >> 4, HEX);
+    Serial.print(rcv[j] & 0xF, HEX);
+    Serial.print(" ");
+  }
 
-  return receivedData;
+  return rcv;
 }
