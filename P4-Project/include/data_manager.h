@@ -44,12 +44,14 @@ private:
 public:
 
     // Constructor
-    DataManager(uint8_t first_step = 0, bool set_verbose = false, float temp_data_offset = -12.0);
+    DataManager(bool set_verbose = false, float temp_data_offset = -12.0);
 
     // Destructor
     ~DataManager(); 
 
-    uint8_t set_SWC(const char json[]);
+    uint8_t reset(bool rst_SWC = false);
+
+    uint8_t set_SWC(const char *json, uint8_t first_step = 0);
 
     uint8_t get_SWC_state(uint8_t& command, uint16_t& sleep_mins);
 
