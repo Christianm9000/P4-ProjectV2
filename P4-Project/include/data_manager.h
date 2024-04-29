@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>        // docs: https://arduinojson.org/v7/tutorial/deserialization/
 #include <vector>
+#include <utility>
 
 
 class DataManager {
@@ -59,7 +60,7 @@ public:
 
     uint8_t append_data(int soil_moist_data, float air_temp_data);
     
-    uint8_t* return_data();
+    std::pair<uint8_t*, uint8_t> return_data();
 };
 
 #endif // DATA_MANAGER_H
