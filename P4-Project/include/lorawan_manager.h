@@ -8,7 +8,6 @@ private:
   LoRaModem modem;
   String appEui;
   String appKey;
-  String dataToSend;
   int TXPower;
   int SpreadingFactor;
   bool ADR;
@@ -24,7 +23,7 @@ public:
   int set_config(bool adr, int spreadingFactor, int power);
 
   // Send data over LoRaWAN and check for downlink messages
-  int send_data(const String& data);
+  int send_data(uint8_t* data);
 
   // Retrieve data received from downlink
   String retrieve_data();
