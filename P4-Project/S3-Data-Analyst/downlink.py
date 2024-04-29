@@ -1,8 +1,16 @@
-import requests
-headers = {
-'Content-Type': 'application/json',
-'Authorization': 'Bearer vnoV5AAAABFpb3RuZXQudGVyYWNvbS5kawE_rxX1mxXoLskIDZ27kNg=',
-}
-data = '{ "cmd": "tx", "EUI": "A8610A34322F6A0F", "port": 1, "confirmed": false, "data": "0ffff0", "appid": "01F6452E" }'
-response = requests.post('https://eu1.loriot.io/1/rest', headers=headers, data=data)
-print(response)
+import json
+
+# Read the JSON file
+with open('downlink.json', 'r') as file:
+    data = json.load(file)
+
+# Convert the JSON object to a string
+json_string = json.dumps(data)
+
+# Convert the string to bytes
+bytes_object = json_string.encode()
+
+# Convert the bytes to hexadecimal
+hex_string = bytes_object.hex()
+
+print(hex_string)
