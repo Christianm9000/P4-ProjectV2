@@ -146,6 +146,9 @@ uint8_t DataManager::append_data(int soil_moist_data, float air_temp_data) {
         }
         else {
             // create new back with .push_back()
+            if (stored_bits > 0) {  // remove the empty back before pushing onto the new one
+                compressed_data.pop_back();
+            }
             compressed_data.push_back(current_value);
         }
         num_samples++;
@@ -164,13 +167,15 @@ uint8_t DataManager::append_data(int soil_moist_data, float air_temp_data) {
 }
 
 
-// Returns a pointer to an array containing the compressed data in a uint8_t array.
+// Returns a pointer to an array containing the compressed data in a uint8_t array and the size of the array, in a std::pair.
 // remember to dealloc via 'delete[] returned_pointer' when done using it.
 // Throws a 'const std::bad_alloc' error if dynamic memory allocation via 'new' fails.
-uint8_t* DataManager::return_data() {
+std::pair<uint8_t*, uint8_t> DataManager::return_data() {
     uint16_t used_bits = num_samples * 7;
     uint8_t used_bytes = uint8_t(used_bits / 8);
-    if ((used_bits % 8) > 0) { used_bytes++; }
+    if ((used_bits % 8) > 0) {
+        used_bytes++;
+    }
 
     uint8_t* data_array_ptr = new uint8_t[used_bytes];  // allocate on heap - persists after scope is exited
 
@@ -190,6 +195,6 @@ uint8_t* DataManager::return_data() {
     if (verbose) {
         Serial.println("");
     }
-
-    return data_array_ptr;
+    
+    return std::pair<uint8_t*, uint8_t>(data_array_ptr, used_bytes);
 }
