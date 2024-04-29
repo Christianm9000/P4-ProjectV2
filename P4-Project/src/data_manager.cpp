@@ -17,6 +17,12 @@ DataManager::~DataManager() {
 // reset all attributes and make the object ready for a new SWC.
 // if rst_SWC flag is set to true, clear the SWC as well. Only set if intention is full reset 
 uint8_t DataManager::reset(bool rst_SWC) {
+
+    if (verbose) {
+        Serial.println("Reseting the DataManager instance");
+        Serial.println();
+    }
+
     if (rst_SWC) {
         SWC.clear();
     }

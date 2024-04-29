@@ -14,6 +14,11 @@ private:
     uint8_t tempPin;
     uint16_t minutes;
 
+    // Creating an instance of the other classes (DataManager, SensorManager, LoraWanManager)
+    SensorModule sensor;
+    LoRaWAN loRa;
+    DataManager NVstorage;
+
 public:
     int get_SoC();
     int sleep(uint16_t minutes);
