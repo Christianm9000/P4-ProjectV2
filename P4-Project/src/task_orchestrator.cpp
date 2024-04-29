@@ -1,4 +1,5 @@
 #include "task_orchestrator.h"
+#include "data_manager.h"
 
 /*
 
@@ -7,29 +8,32 @@
 void Orchestrator::begin()
 {
     //
-    int SoC_value = get_SoC();
+    // int SoC_value = get_SoC();
 }
 
-int make_measurement()
+void Orchestrator::make_measurements(uint8_t tempPin, int moistPin, int dryValue, int wetValue)
 {
-    SensorModule sensorModule(A1, 500, 200, 17); // A1: Moisture sensor pin, 500: Dry reading, 200: Wet reading, 17: DS18B20 digital data pin
+    SensorModule sensorModule(moistPin, dryValue, wetValue, tempPin); 
 
     float temperature = sensorModule.getTemperature();
     int moisturePercentage = sensorModule.getMoisture();
 
-    return (moisturePercentage, temperature);
+    DataManager dataManager; // Create an instance of DataManager
+    dataManager.append_data(moisturePercentage, temperature); // Call append_data
+}
+int Orchestrator::sleep(uint16_t minutes)
+{
+    unsigned long sleep_time = minutes;
+    LowPower.deepSleep(sleep_time);
+    return sleep_time;
 }
 
-int sleep(unsigned int seconds)
-{
-    unsigned long sleep_time = seconds * 1000;
-    LowPower.deepSleep(sleep_time);
-}
-int get_SoC()
+int Orchestrator::get_SoC()
 {
     pinMode(14, INPUT);
     return digitalRead(14);
 }
-int handle_uplink()
-{
-}
+
+// int Orchestrator::handle_uplink()
+// {
+// }
