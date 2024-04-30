@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pymysql, json
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 offset = -12
@@ -19,11 +19,14 @@ def home():
     cursor.execute("SELECT ts, data FROM iot_data WHERE cmd = 'rx'")
     data = cursor.fetchall()
     conn.close()
-
     times = [datetime.fromtimestamp(row[0] / 1000).replace(microsecond=0) for row in data if row[0]]
     values = [row[1] for row in data if row[1]]
     numbers = [int(value, 16) for value in values]
     bits = [bin(number)[2:] for number in numbers]
+    timestamps = []
+    for time, value in zip(times, values):
+        number_of_measurements = len(bin(int(value, 16))[2:]) // 7
+        timestamps.extend([time - timedelta(minutes=30*i) for i in range(number_of_measurements-1, -1, -1)])
 
     moisture = [bit_string[i:i+7] for bit_string in bits for i in range(0, len(bit_string), 7) if len(bit_string[i:i+7]) == 7 and (i // 7) % 2 == 0]
     temperature = [bit_string[i:i+7] for bit_string in bits for i in range(0, len(bit_string), 7) if len(bit_string[i:i+7]) == 7 and (i // 7) % 2 != 0]
@@ -32,8 +35,8 @@ def home():
     temperature_values = [int(bit_string[:6], 2) - 32 - (offset) + (0.5 if bit_string[-1] == '1' else 0) for bit_string in temperature]
 
     fig = make_subplots(rows=1, cols=1, specs=[[{'secondary_y': True}]])
-    fig.add_trace(go.Scatter(x=times, y=moisture_percentages, mode='lines', marker=dict(color='green'), name='Moisture Percentage'), row=1, col=1, secondary_y=False)
-    fig.add_trace(go.Scatter(x=times, y=temperature_values, mode='lines', marker=dict(color='orange'), name='Temperature'), row=1, col=1, secondary_y=True)
+    fig.add_trace(go.Scatter(x=timestamps, y=moisture_percentages, mode='lines', marker=dict(color='green'), name='Moisture Percentage'), row=1, col=1, secondary_y=False)
+    fig.add_trace(go.Scatter(x=timestamps, y=temperature_values, mode='lines', marker=dict(color='orange'), name='Temperature'), row=1, col=1, secondary_y=True)
     fig.update_yaxes(title_text='Moisture Percentage', secondary_y=False)
     fig.update_yaxes(title_text='Temperature', secondary_y=True)
     fig.update_layout(title='IOT DEVICE', xaxis_title='Time')
