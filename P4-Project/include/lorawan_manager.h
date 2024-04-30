@@ -3,6 +3,7 @@
 
 #include <MKRWAN.h>
 #include <utility>
+#include "arduino_secrets.h"
 
 class LoRaWAN {
 private:
@@ -15,7 +16,7 @@ private:
 
 public:
   // Constructor to initialize the modem with the regional settings
-  LoRaWAN(const String& eui, const String& key);
+  LoRaWAN(const String& eui = SECRET_APP_EUI, const String& key = SECRET_APP_KEY);
 
   // Join LoRaWAN network with the defined AppEUI and AppKEY
   void setup();
@@ -27,7 +28,7 @@ public:
   int send_data(uint8_t* data, uint8_t size);
 
   // Retrieve data received from downlink
-  std::pair<char*, int> retrieve_data();
+  std::pair<char*, uint16_t> retrieve_data();
 };
 
 #endif // LORAWAN_MANAGER_H

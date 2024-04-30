@@ -8,15 +8,19 @@ int moisturePercentage = sensorModule.getMoisture();
 */
 
 
-SensorModule::SensorModule(int moisturePin, int dry, int wet, int tempPin)
-    : moisturePin(moisturePin), dryReading(dry), wetReading(wet), oneWire(tempPin), tempSensor(&oneWire) {
-  // Start the temperature sensor
+SensorModule::SensorModule(uint8_t moisturePin, uint16_t dry, uint8_t wet, uint8_t tempPin) : oneWire(tempPin) {
+  // Initialize Attributes
+  this->moisturePin = moisturePin;
+  this->dryReading = dry;
+  this->wetReading = wet;
+  this->tempSensor = &oneWire;
+
   tempSensor.begin();
 }
 
 int SensorModule::getMoisture() {
-  int moistureValue = analogRead(moisturePin);
-  int moisturePercentage = map(moistureValue, dryReading, wetReading, 0, 100);
+  int moistureValue = analogRead(this->moisturePin);
+  int moisturePercentage = map(moistureValue, this->dryReading, this->wetReading, 0, 100);
   moisturePercentage = constrain(moisturePercentage, 0, 100);
   return moisturePercentage;
 }

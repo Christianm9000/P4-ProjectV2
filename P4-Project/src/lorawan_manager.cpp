@@ -1,7 +1,7 @@
 #include "lorawan_manager.h"
 #include "arduino_secrets.h"
 
-LoRaWAN::LoRaWAN(const String& eui, const String& key) : appEui(eui), appKey(key) {
+LoRaWAN::LoRaWAN(const String& eui, const String& key) {
   if (!modem.begin(EU868)) {
     Serial.println("Failed to start module");
     while (1);
@@ -32,7 +32,7 @@ int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
   this->ADR = adr;
 
   // Declare Response Variable
-  int err;
+  uint8_t err;
 
   // Enable or Disable ADR and Set Response Variable
   if(modem.setADR(this->ADR)) {
@@ -52,7 +52,7 @@ int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
 
 int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
   // Declare Error Variable
-  int err;
+  uint8_t err;
 
   // Start Package Construction and Add Data
   modem.beginPacket();
@@ -80,25 +80,26 @@ int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
 }
 
 
-std::pair<char*, int> LoRaWAN::retrieve_data() {
+std::pair<char*, uint16_t> LoRaWAN::retrieve_data() {
   // Check if any data is available
   if (!modem.available()) {
-      return std::pair<char*, int>(nullptr, 0); // No data received. Return nullptr and 0
+      return std::pair<char*, uint16_t>(nullptr, 0); // No data received. Return nullptr and 0
   }
 
   // Check Packet Size and return nullptr if no data is available
   int packet_size = modem.parsePacket();
 
+  // No packet or read error
   if (packet_size <= 0) {
-    return std::pair<char*, int>(nullptr, 0); // No packet or read error
+    return std::pair<char*, uint16_t>(nullptr, 0);
   }
 
   // Allocate Memory and Declare sleep offset Variable
   char* rcv = new char[packet_size + 1];  // Allocate Memory for SWC plus null terminator
-  int offset = 0; // Sleep offset before SWC start. Measured in minutes
+  uint16_t offset = 0; // Sleep offset before SWC start. Measured in minutes
 
   int i = 0;
-  int packet_switch = 0; // 0 if we are still reading the SWC. 1 if we are reading the offset
+  uint8_t packet_switch = 0; // 0 if we are still reading the SWC. 1 if we are reading the offset
   while (modem.available() && i < packet_size) { // Ensure we do not overflow the buffer
 
     // Add character to SWC cycle char array
@@ -121,5 +122,5 @@ std::pair<char*, int> LoRaWAN::retrieve_data() {
 
   rcv[i] = '\0'; // Add string terminator if the char array is converted.
   
-  return std::pair<char*, int>(rcv, offset);
+  return std::pair<char*, uint16_t>(rcv, offset);
 }
