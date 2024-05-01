@@ -84,7 +84,7 @@ std::pair<char*, uint16_t> LoRaWAN::retrieve_data() {
   // Check if any data is available
   if (!modem.available()) {
       Serial.println("REC DATA: NO DOWNLINK.");
-      return {nullptr} // No data received. Return nullptr and 0
+      return {nullptr, 0}; // No data received. Return nullptr and 0
   }
 
   // Check Packet Size and return nullptr if no data is available
@@ -93,39 +93,36 @@ std::pair<char*, uint16_t> LoRaWAN::retrieve_data() {
   // No packet or read error
   if (packet_size <= 0) {
     Serial.println("REC DATA: NO PACKET SIZE.");
-    return std::pair<char*, uint16_t>(nullptr, 0);
+    return {nullptr, 0};
   }
 
-  // Allocate Memory and Declare sleep offset Variable
-  char* rcv = new char[packet_size + 1];  // Allocate Memory for SWC plus null terminator
-  uint16_t offset = 0; // Sleep offset before SWC start. Measured in minutes
+  // Allocate Memory for SWC plus null terminator
+  char* rcv = new char[packet_size + 1];
+
+  // Sleep offset before SWC start. Measured in minutes
+  uint16_t offset = 0; 
 
   int i = 0;
-  uint8_t packet_switch = 0; // 0 if we are still reading the SWC. 1 if we are reading the offset
+  bool readingSWC = true; // True if we are still reading the SWC. False if we are reading the offset
   while (modem.available() && i < packet_size) { // Ensure we do not overflow the buffer
 
-    // Add character to SWC cycle char array
-    if (packet_switch == 0) {
+    // Read from buffer
+    char c = (char)modem.read();
 
-      // Switch to offset calculation when the SWC cycle has been constructed.
-      // if ((char)modem.peek() == '}') {
-      //   packet_switch = 1;
-      // }
+    if (readingSWC) {
 
-      rcv[i++] = (char)modem.read();  // Read each byte as a character
+      // End of SWC
+      if (c == '}') {
+        readingSWC = false;
+        rcv[i] = '\0'; // Null-terminate the SWC string
+      }
+      rcv[i++] = c; // add character to char array
+
+    } else {
+      // Convert char to int and accumulate
+      offset = offset * 10 + (c - '0');
     }
-
-    // Add to the offset in case we are done with the SWC
-    // else {
-    //   // Create offset in minutes by left shifting number after each read to continue adding. Necessary as we can only read the next byte from the buffer.
-    //   num = (uint8_t)modem.read();
-
-    //   Serial.println("num: " + num);
-
-    //   offset = offset*10 + num;/*(int)modem.read();*/
-    // }
   }
-
   rcv[i] = '\0'; // Add string terminator if the char array is converted.
   
   return std::pair<char*, uint16_t>(rcv, offset);
