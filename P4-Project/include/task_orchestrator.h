@@ -19,6 +19,9 @@ private:
 
     uint16_t measurement_power_req = 5; // Capacity in mv needed to complete command 0 - make measurement.
     uint16_t transmit_power_req = 10; // Capacity in mv needed to complete command 1 - make measurement and transmit.
+    uint16_t SoC = 0; // Voltage across SuperCap in mv.
+    uint16_t Min_SoC = 1000; // Offset voltage needed for the boost converter to work, hence powering the board.
+
     bool has_data_measurements = false;
     bool SWC_received = false;
 
@@ -39,16 +42,9 @@ public:
 
     uint8_t setup_SoC();
 
-    // turns on the MOSFET, which controls the flow of the supercap.
-    // Remember to turn off when done in order to save power.
-    uint8_t enable_SoC();
-
-    // turns off the MOSFET, which controls the flow of the supercap.
-    uint8_t disable_SoC();
-
     // uses the SPI interface to get a reading from the MCP3201.
     // Converts it to a mV value of 0mV to 5000mV
-    uint16_t get_SoC();
+    uint8_t get_SoC(); // turns on the MOSFET (controls flow to supercap), takes measurement, and turns off MOSFET.
 
     int sleep(uint16_t minutes);
 

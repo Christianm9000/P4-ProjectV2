@@ -15,6 +15,8 @@ Orchestrator::Orchestrator()
     this->transmit_power_req;                   // Power requirement in % needed to perform transmission
     this->has_data_measurements;                // Check if the device have acquired measurements. Needed for decisionmaking.
     this->SWC_received;                         // Flag to check if SWC has been received upon downlink.
+    this->SoC;                                  // Voltage across Supercap in mv.
+    this->Min_SoC;                              // Minimum voltage required on the supercap to ensure the board is powered through boost converter.
 
     uint8_t* dummy_Data_array = new uint8_t[1, 1, 1, 1];
     uint8_t dummy_Data_size = 4;
@@ -28,21 +30,27 @@ Orchestrator::Orchestrator()
     // Initialization loop. Ensures we dont start 'working' until a SWC has been received.
     while (!this->SWC_received)
     {
+        // Check State of Charge
+        this->get_SoC();
+
         // Check if there is enough power to transmit
-        if (this->transmit_power_req < this->get_SoC())
+        if (this->transmit_power_req < this->SoC)
         {
             // Send Dummy Message and Receive SWC
             uint8_t send_response = handle_uplink(dummy_Data_array, dummy_Data_size);
-
         }
 
         // Sleep Some time before trying again.
+        this->sleep(2);
     }
 
 
     // Enter Run Loop
     while(true) 
     {   
+        // Get SoC
+        this->get_SoC();
+
         // Get Command from SWC
         dm.get_SWC_state(this->command, this->minutes);
 
@@ -52,7 +60,6 @@ Orchestrator::Orchestrator()
             this->SWC_received = false;
         }
 
-
         switch (this->command)
         {
         case 0:
@@ -60,7 +67,7 @@ Orchestrator::Orchestrator()
         Simple case where only data measurement is required. Checks if we have enough power and performs the measurements.
         */  
             bool dummy = true;
-            if ( this->measurement_power_req < this->get_SoC())
+            if ( this->measurement_power_req < this->SoC)
             {
                 dummy = false;
             }
@@ -78,7 +85,7 @@ Orchestrator::Orchestrator()
         */
             bool dummy = true;
 
-            if ((this->measurement_power_req + this->transmit_power_req) < this->get_SoC()) // Check if both measurement and transmit is possible.
+            if ((this->measurement_power_req + this->transmit_power_req) < this->SoC) // Check if both measurement and transmit is possible.
             {
                 dummy = false;
             }
@@ -86,7 +93,7 @@ Orchestrator::Orchestrator()
             // Make measurements
             this->make_measurements(dummy);
 
-            if (this->has_data_measurements && this->transmit_power_req < this->get_SoC()) // If we have enough power to transmit, check if there is any saved data.
+            if (this->has_data_measurements && this->transmit_power_req < this->SoC) // If we have enough power to transmit, check if there is any saved data.
             {
                 // Get Data from Data Manager
                 std::pair<uint8_t*, uint8_t> returned_pair = dm.return_data();
@@ -156,21 +163,16 @@ uint8_t Orchestrator::setup_SoC() {
     return 1;
 }
 
-uint8_t Orchestrator::enable_SoC() {
-    digitalWrite(this->SOC_ENABLE_PIN, HIGH);
-    return 1;
-}
-
-uint8_t Orchestrator::disable_SoC() {
-    digitalWrite(this->SOC_ENABLE_PIN, LOW);
-    return 1;
-}
-
-uint16_t Orchestrator::get_SoC()
+uint8_t Orchestrator::get_SoC()
 {
+    digitalWrite(this->SOC_ENABLE_PIN, HIGH);
+    delay(80);
     uint16_t raw = adc.read(MCP3201::Channel::SINGLE_0);
     uint16_t val = adc.toAnalog(raw);   // convert from digital value to mV-value in range [0mV, 5000mV]
-    return val;
+    digitalWrite(this->SOC_ENABLE_PIN, LOW);
+    this->SoC = val - this->Min_SoC;
+
+    return 1;
 }
 
 uint8_t Orchestrator::handle_uplink(uint8_t* data, uint8_t packet_size)

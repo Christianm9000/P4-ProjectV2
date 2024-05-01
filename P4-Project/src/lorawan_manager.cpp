@@ -83,8 +83,8 @@ int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
 std::pair<char*, uint16_t> LoRaWAN::retrieve_data() {
   // Check if any data is available
   if (!modem.available()) {
-      Serial.println("REC DATA: NO DOWNLINK.");
-      return {nullptr, 0}; // No data received. Return nullptr and 0
+    // No data received. Return nullptr and 0
+    return {nullptr, 0};
   }
 
   // Check Packet Size and return nullptr if no data is available
@@ -92,7 +92,6 @@ std::pair<char*, uint16_t> LoRaWAN::retrieve_data() {
 
   // No packet or read error
   if (packet_size <= 0) {
-    Serial.println("REC DATA: NO PACKET SIZE.");
     return {nullptr, 0};
   }
 
