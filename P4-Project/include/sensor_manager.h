@@ -16,7 +16,7 @@ private:
   DallasTemperature tempSensor;
 
 public:
-  SensorModule(uint8_t sensorPowerPin = 5, uint8_t moisturePin = 16, uint16_t dry = 500, uint8_t wet = 200, uint8_t tempPin = 7);
+  SensorModule(uint8_t sensorPowerPin = 5, uint8_t moisturePin = 16, uint16_t dry = 1023, uint8_t wet = 300, uint8_t tempPin = 7);
   
   int getMoisture();
   
