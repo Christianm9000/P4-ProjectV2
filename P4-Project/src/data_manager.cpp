@@ -19,7 +19,7 @@ DataManager::~DataManager() {
 uint8_t DataManager::reset(bool rst_SWC) {
 
     if (verbose) {
-        Serial.println("Reseting the DataManager instance");
+        Serial.println("Resetting the DataManager instance");
         Serial.println();
     }
 

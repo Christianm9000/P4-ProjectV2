@@ -14,6 +14,11 @@ private:
     uint16_t minutes;
     uint8_t command;
 
+    uint16_t measurement_power_req = 5; // Capacity in mv needed to complete command 0 - make measurement.
+    uint16_t transmit_power_req = 10; // Capacity in mv needed to complete command 1 - make measurement and transmit.
+    bool has_data_measurements = false;
+    bool SWC_received = false;
+
     // Creating an instance of the other classes (DataManager, SensorManager, LoraWanManager)
     SensorModule Sensor;
     LoRaWAN LoRa;

@@ -8,50 +8,98 @@ Orchestrator::Orchestrator()
     // This will run when the IoT device has lost power and resets.
 
     // Setup Variables used when powered on.
-    this->minutes;
-    this->command;
+    this->minutes;                              // Time to sleep after fetching command
+    this->command;                              // Command from sleep wake cycle 0 or 1
+    this->measurement_power_req;                // Power requirement in % needed to perform measurement
+    this->transmit_power_req;                   // Power requirement in % needed to perform transmission
+    this->has_data_measurements;                // Check if the device have acquired measurements. Needed for decisionmaking.
+    this->SWC_received;                         // Flag to check if SWC has been received upon downlink.
 
-    uint8_t* dummy_Data_array = new uint8_t[1, 2, 3, 4];
+    uint8_t* dummy_Data_array = new uint8_t[1, 1, 1, 1];
     uint8_t dummy_Data_size = 4;
-    bool SWC_Received = false;
-
-    bool transmit_flag = false;
     
     // Join LoRaWAN Network
     LoRa.setup();
 
-
-    while (!SWC_Received) // Initialization Loop. Keep Retrieving SWC until one is received.
+    // Initialization loop. Ensures we dont start 'working' until a SWC has been received.
+    while (!this->SWC_received)
     {
-        // Send Dummy Message and Receive SWC
-        uint8_t send_response = handle_uplink(dummy_Data_array, dummy_Data_size);
-
-        if (send_response == 2)
+        // Check if there is enough power to transmit
+        if (this->transmit_power_req < this->get_SoC())
         {
-            SWC_Received = true;
+            // Send Dummy Message and Receive SWC
+            uint8_t send_response = handle_uplink(dummy_Data_array, dummy_Data_size);
+
         }
 
         // Sleep Some time before trying again.
-        
     }
 
 
     // Enter Run Loop
     while(true) 
-    {
+    {   
+        // Get Command from SWC
         dm.get_SWC_state(this->command, this->minutes);
 
-        // Make Data Measurement
-
-        if (this->command == 1)
+        // Reset SWC flag if necessary
+        if (this->SWC_received)
         {
-            // Transmit Data Here
+            this->SWC_received = false;
         }
 
-        // Sleep For the Defined Time.
-        if (this->minutes > 0)
+
+        switch (this->command)
         {
-            sleep(this->minutes);
+        case 0:
+        /*
+        Simple case where only data measurement is required. Checks if we have enough power and performs the measurements.
+        */
+            if ( this->measurement_power_req < this->get_SoC())
+            {
+                // Make Measurements
+                this->make_measurements();
+            }
+
+            break;
+
+        case 1:
+        /*
+        If it is possible, we want to both make measurements and transmit. First we check if we have enough power for both.
+        If the first If statement completes, then the second one will also be true.
+        There is however a chance that we might have some previous unsent measurements and only enough power to transmit. 
+        Hence it becomes optimal to deliver some data instead of none.
+        */
+
+            if ((this->measurement_power_req + this->transmit_power_req) < this->get_SoC()) // Check if both measurement and transmit is possible.
+            {
+                // Make measurements
+                this->make_measurements();
+
+            }
+
+            if (this->has_data_measurements && this->transmit_power_req < this->get_SoC()) // If we have enough power to transmit, check if there is any saved data.
+            {
+                // Get Data from Data Manager
+                std::pair<uint8_t*, uint8_t> returned_pair = dm.return_data();
+                uint8_t* returned_data = returned_pair.first;
+                int array_size = returned_pair.second;
+
+                // Handle Uplink with data
+                this->handle_uplink(returned_data, array_size);
+
+                // Reset data flag as old has been transmitted.
+                this->has_data_measurements = false;
+            }
+        
+        default:
+            break;
+        }
+        
+        // Sleep if required and if SWC_received flag is false
+        if (this->minutes > 0 && this->SWC_received != true)
+        {
+            this->sleep(this->minutes);
         }
     }
 }
@@ -70,6 +118,9 @@ void Orchestrator::make_measurements()
     int moisturePercentage = this->Sensor.getMoisture();
 
     this->dm.append_data(moisturePercentage, temperature); // Call append_data
+
+    // Set measurements flag to true
+    this->has_data_measurements = true;
 }
 
 int Orchestrator::get_SoC()
@@ -112,6 +163,9 @@ uint8_t Orchestrator::handle_downlink()
 
     // Set the SWC in the Data Manager
     dm.set_SWC(SWC_Pair.first);
+
+    // Set SWC received Flag
+    this->SWC_received = true;
 
     // Sleep For the Prolonged Offset
     if (SWC_Pair.second != 0)

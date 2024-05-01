@@ -83,7 +83,8 @@ int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
 std::pair<char*, uint16_t> LoRaWAN::retrieve_data() {
   // Check if any data is available
   if (!modem.available()) {
-      return std::pair<char*, uint16_t>(nullptr, 0); // No data received. Return nullptr and 0
+      Serial.println("REC DATA: NO DOWNLINK.");
+      return {nullptr} // No data received. Return nullptr and 0
   }
 
   // Check Packet Size and return nullptr if no data is available
@@ -91,6 +92,7 @@ std::pair<char*, uint16_t> LoRaWAN::retrieve_data() {
 
   // No packet or read error
   if (packet_size <= 0) {
+    Serial.println("REC DATA: NO PACKET SIZE.");
     return std::pair<char*, uint16_t>(nullptr, 0);
   }
 
@@ -106,18 +108,22 @@ std::pair<char*, uint16_t> LoRaWAN::retrieve_data() {
     if (packet_switch == 0) {
 
       // Switch to offset calculation when the SWC cycle has been constructed.
-      if ((char)modem.peek() == '}') {
-        packet_switch = 1;
-      }
+      // if ((char)modem.peek() == '}') {
+      //   packet_switch = 1;
+      // }
 
       rcv[i++] = (char)modem.read();  // Read each byte as a character
     }
 
     // Add to the offset in case we are done with the SWC
-    else {
-      // Create offset in minutes by left shifting number after each read to continue adding. Necessary as we can only read the next byte from the buffer.
-      offset = offset*10 + (int)modem.read();
-    }
+    // else {
+    //   // Create offset in minutes by left shifting number after each read to continue adding. Necessary as we can only read the next byte from the buffer.
+    //   num = (uint8_t)modem.read();
+
+    //   Serial.println("num: " + num);
+
+    //   offset = offset*10 + num;/*(int)modem.read();*/
+    // }
   }
 
   rcv[i] = '\0'; // Add string terminator if the char array is converted.
