@@ -41,18 +41,11 @@ Orchestrator::Orchestrator()
     {
         dm.get_SWC_state(this->command, this->minutes);
 
-        switch (command)
-        {
-        case 0:
-            Serial.println("Take Measurement.");
-            break;
+        // Make Data Measurement
 
-        case 1:
-            Serial.println("Take Measurement. And Send Data.");
-            break;
-        
-        default:
-            break;
+        if (this->command == 1)
+        {
+            // Transmit Data Here
         }
 
         // Sleep For the Defined Time.
