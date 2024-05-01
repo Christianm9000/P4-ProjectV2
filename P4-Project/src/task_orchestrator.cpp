@@ -3,7 +3,8 @@
 Orchestrator::Orchestrator() 
     : Sensor(), // Initialize Sensor Manager
       LoRa(),   // Initialize LoRa Manager
-      dm() // Initialize Data Manager
+      dm(), // Initialize Data Manager
+      adc(this->ADC_VREF, this->SPI_CS)
 {  
     // This will run when the IoT device has lost power and resets.
 
@@ -18,8 +19,11 @@ Orchestrator::Orchestrator()
     uint8_t* dummy_Data_array = new uint8_t[1, 1, 1, 1];
     uint8_t dummy_Data_size = 4;
     
+    // setup of the external MCP3201 12-bit ADC, which measures the Voltage across the supercap (SoC)
+    this->setup_SoC();
+
     // Join LoRaWAN Network
-    LoRa.setup();
+    this->LoRa.setup();
 
     // Initialization loop. Ensures we dont start 'working' until a SWC has been received.
     while (!this->SWC_received)
@@ -139,10 +143,34 @@ void Orchestrator::make_measurements(bool dummy)
     }
 }
 
-int Orchestrator::get_SoC()
+uint8_t Orchestrator::setup_SoC() {
+    pinMode(this->SPI_CS, OUTPUT);
+    pinMode(this->SOC_ENABLE_PIN, OUTPUT);
+    // Set initial states
+    digitalWrite(this->SPI_CS, HIGH);
+    digitalWrite(this->SOC_ENABLE_PIN, LOW);
+    // initialize SPI interface for MCP3201
+    SPISettings settings(ADC_CLK, MSBFIRST, SPI_MODE0);
+    SPI.begin();
+    SPI.beginTransaction(settings);
+    return 1;
+}
+
+uint8_t Orchestrator::enable_SoC() {
+    digitalWrite(this->SOC_ENABLE_PIN, HIGH);
+    return 1;
+}
+
+uint8_t Orchestrator::disable_SoC() {
+    digitalWrite(this->SOC_ENABLE_PIN, LOW);
+    return 1;
+}
+
+uint16_t Orchestrator::get_SoC()
 {
-    pinMode(14, INPUT);
-    return digitalRead(14);
+    uint16_t raw = adc.read(MCP3201::Channel::SINGLE_0);
+    uint16_t val = adc.toAnalog(raw);   // convert from digital value to mV-value in range [0mV, 5000mV]
+    return val;
 }
 
 uint8_t Orchestrator::handle_uplink(uint8_t* data, uint8_t packet_size)
