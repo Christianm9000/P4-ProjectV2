@@ -8,8 +8,11 @@ int moisturePercentage = sensorModule.getMoisture();
 */
 
 
-SensorModule::SensorModule(uint8_t moisturePin, uint16_t dry, uint8_t wet, uint8_t tempPin) : oneWire(tempPin) {
+SensorModule::SensorModule(uint8_t sensorPowerPin, uint8_t moisturePin, uint16_t dry, uint8_t wet, uint8_t tempPin) : oneWire(tempPin) {
   // Initialize Attributes
+  this->sensorsPowerPin = sensorPowerPin;
+  pinMode(this->sensorsPowerPin, OUTPUT);
+  digitalWrite(this->sensorsPowerPin, LOW); // start with sensors turned off
   this->moisturePin = moisturePin;
   this->dryReading = dry;
   this->wetReading = wet;
@@ -28,4 +31,9 @@ int SensorModule::getMoisture() {
 float SensorModule::getTemperature() {
   tempSensor.requestTemperatures();
   return tempSensor.getTempCByIndex(0);
+}
+
+bool SensorModule::toggleSensorPower() {
+  digitalWrite(this->sensorsPowerPin, !digitalRead(this->sensorsPowerPin)); // Toggle based on current state
+  return digitalRead(this->sensorsPowerPin);
 }
