@@ -30,7 +30,7 @@ public:
     int get_SoC();
     int sleep(uint16_t minutes);
 
-    void make_measurements();
+    void make_measurements(bool dummy);
 
     uint8_t handle_uplink(uint8_t* data, uint8_t size);
     uint8_t handle_downlink();

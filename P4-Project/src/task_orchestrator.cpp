@@ -54,15 +54,17 @@ Orchestrator::Orchestrator()
         case 0:
         /*
         Simple case where only data measurement is required. Checks if we have enough power and performs the measurements.
-        */
+        */  
+            bool dummy = true;
             if ( this->measurement_power_req < this->get_SoC())
             {
-                // Make Measurements
-                this->make_measurements();
+                dummy = false;
             }
 
-            break;
+            // Make Measurements
+            this->make_measurements(dummy);
 
+            break;
         case 1:
         /*
         If it is possible, we want to both make measurements and transmit. First we check if we have enough power for both.
@@ -70,13 +72,15 @@ Orchestrator::Orchestrator()
         There is however a chance that we might have some previous unsent measurements and only enough power to transmit. 
         Hence it becomes optimal to deliver some data instead of none.
         */
+            bool dummy = true;
 
             if ((this->measurement_power_req + this->transmit_power_req) < this->get_SoC()) // Check if both measurement and transmit is possible.
             {
-                // Make measurements
-                this->make_measurements();
-
+                dummy = false;
             }
+
+            // Make measurements
+            this->make_measurements(dummy);
 
             if (this->has_data_measurements && this->transmit_power_req < this->get_SoC()) // If we have enough power to transmit, check if there is any saved data.
             {
@@ -112,15 +116,27 @@ int Orchestrator::sleep(uint16_t minutes)
     return sleep_time;
 }
 
-void Orchestrator::make_measurements()
-{
-    float temperature = this->Sensor.getTemperature();
-    int moisturePercentage = this->Sensor.getMoisture();
+void Orchestrator::make_measurements(bool dummy)
+{   
+    // Variable Initialization
+    float temperature = -20.0;
+    uint8_t moisturePercentage = 100;
 
-    this->dm.append_data(moisturePercentage, temperature); // Call append_data
+    if (!dummy)
+    {
+        // Make measurements
+        temperature = this->Sensor.getTemperature();
+        moisturePercentage = this->Sensor.getMoisture();
+    }
 
-    // Set measurements flag to true
-    this->has_data_measurements = true;
+    if (!dummy || this->has_data_measurements)
+    {
+        // Append Data to data manager
+        this->dm.append_data(moisturePercentage, temperature);
+
+        // Set measurements flag to true
+        this->has_data_measurements = true;
+    }
 }
 
 int Orchestrator::get_SoC()
