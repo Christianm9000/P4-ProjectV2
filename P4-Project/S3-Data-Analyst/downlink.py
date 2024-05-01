@@ -1,14 +1,9 @@
-import json
-
-# Read the JSON file
-with open('downlink.json', 'r') as file:
-    data = json.load(file)
-
-# Convert the JSON object to a string
-json_string = json.dumps(data)
+# Read the text file
+with open('downlink.txt', 'r') as file:
+    data = file.read()
 
 # Convert the string to bytes
-bytes_object = json_string.encode()
+bytes_object = data.encode()
 
 # Convert the bytes to hexadecimal
 hex_string = bytes_object.hex()
