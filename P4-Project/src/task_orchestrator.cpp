@@ -9,17 +9,18 @@ Orchestrator::Orchestrator()
     // This will run when the IoT device has lost power and resets.
 
     // Setup Variables used when powered on.
-    this->minutes;                              // Time to sleep after fetching command
-    this->command;                              // Command from sleep wake cycle 0 or 1
-    this->measurement_power_req;                // Power requirement in % needed to perform measurement
-    this->transmit_power_req;                   // Power requirement in % needed to perform transmission
-    this->has_data_measurements;                // Check if the device have acquired measurements. Needed for decisionmaking.
-    this->SWC_received;                         // Flag to check if SWC has been received upon downlink.
-    this->SoC;                                  // Voltage across Supercap in mv.
-    this->Min_SoC;                              // Minimum voltage required on the supercap to ensure the board is powered through boost converter.
+    // this->minutes;                              // Time to sleep after fetching command
+    // this->command;                              // Command from sleep wake cycle 0 or 1
+    // this->measurement_power_req;                // Power requirement in % needed to perform measurement
+    // this->transmit_power_req;                   // Power requirement in % needed to perform transmission
+    // this->has_data_measurements;                // Check if the device have acquired measurements. Needed for decisionmaking.
+    // this->SWC_received;                         // Flag to check if SWC has been received upon downlink.
+    // this->SoC;                                  // Voltage across Supercap in mv.
+    // this->Min_SoC;                              // Minimum voltage required on the supercap to ensure the board is powered through boost converter.
 
     uint8_t* dummy_Data_array = new uint8_t[1, 1, 1, 1];
     uint8_t dummy_Data_size = 4;
+    bool dummy = true;
     
     // setup of the external MCP3201 12-bit ADC, which measures the Voltage across the supercap (SoC)
     this->setup_SoC();
@@ -33,15 +34,21 @@ Orchestrator::Orchestrator()
         // Check State of Charge
         this->get_SoC();
 
+        Serial.println("STATE OF CHARGE: ");
+        Serial.println(this->SoC);
+
         // Check if there is enough power to transmit
         if (this->transmit_power_req < this->SoC)
         {
             // Send Dummy Message and Receive SWC
-            uint8_t send_response = handle_uplink(dummy_Data_array, dummy_Data_size);
+            handle_uplink(dummy_Data_array, dummy_Data_size);
         }
 
         // Sleep Some time before trying again.
-        this->sleep(2);
+        if (!this->SWC_received)
+        {
+            this->sleep(2);
+        }
     }
 
 
@@ -66,7 +73,7 @@ Orchestrator::Orchestrator()
         /*
         Simple case where only data measurement is required. Checks if we have enough power and performs the measurements.
         */  
-            bool dummy = true;
+            dummy = true;
             if ( this->measurement_power_req < this->SoC)
             {
                 dummy = false;
@@ -83,7 +90,7 @@ Orchestrator::Orchestrator()
         There is however a chance that we might have some previous unsent measurements and only enough power to transmit. 
         Hence it becomes optimal to deliver some data instead of none.
         */
-            bool dummy = true;
+            dummy = true;
 
             if ((this->measurement_power_req + this->transmit_power_req) < this->SoC) // Check if both measurement and transmit is possible.
             {
@@ -123,7 +130,10 @@ int Orchestrator::sleep(uint16_t minutes)
 {
     // Converting from minutes to millisecond since LowPower.deepsleep() takes millis as argument
     unsigned long sleep_time = minutes * 60000; // unsigned long --> Size (4 bytes) - Range 0 to 4,294,967,295
-    LowPower.deepSleep(sleep_time);
+    Serial.println("Before Idle");
+    //LowPower.idle(sleep_time);
+    delay(sleep_time);
+    Serial.println("After Idle");
     return sleep_time;
 }
 
@@ -135,9 +145,15 @@ void Orchestrator::make_measurements(bool dummy)
 
     if (!dummy)
     {
+        // Turn on Sensor
+        this->Sensor.toggleSensorPower();
+
         // Make measurements
         temperature = this->Sensor.getTemperature();
         moisturePercentage = this->Sensor.getMoisture();
+
+        // Turn off Sensor
+        this->Sensor.toggleSensorPower();
     }
 
     if (!dummy || this->has_data_measurements)

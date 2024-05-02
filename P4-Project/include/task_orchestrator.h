@@ -17,8 +17,8 @@ private:
     uint16_t minutes;
     uint8_t command;
 
-    uint16_t measurement_power_req = 5; // Capacity in mv needed to complete command 0 - make measurement.
-    uint16_t transmit_power_req = 10; // Capacity in mv needed to complete command 1 - make measurement and transmit.
+    uint16_t measurement_power_req = 50; // Capacity in mv needed to complete command 0 - make measurement.
+    uint16_t transmit_power_req = 100; // Capacity in mv needed to complete command 1 - transmit.
     uint16_t SoC = 0; // Voltage across SuperCap in mv.
     uint16_t Min_SoC = 1000; // Offset voltage needed for the boost converter to work, hence powering the board.
 

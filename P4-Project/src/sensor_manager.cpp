@@ -8,7 +8,7 @@ int moisturePercentage = sensorModule.getMoisture();
 */
 
 
-SensorModule::SensorModule(uint8_t sensorPowerPin, uint8_t moisturePin, uint16_t dry, uint8_t wet, uint8_t tempPin) : oneWire(tempPin) {
+SensorModule::SensorModule(uint8_t sensorPowerPin, uint8_t moisturePin, uint16_t dry, uint16_t wet, uint8_t tempPin) : oneWire(tempPin) {
   // Initialize Attributes
   this->sensorsPowerPin = sensorPowerPin;
   pinMode(this->sensorsPowerPin, OUTPUT);

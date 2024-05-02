@@ -43,7 +43,9 @@ void setup() {
     while (!Serial.available());
     String msg = Serial.readStringUntil('\n');
 
+    Serial.println("Transmitting and Checking Downlink Now.");
     int sendStatus = lm.send_data(returned_data, array_size);
+    Serial.println("Done with Transmit and Downlink Check.");
 
     if (sendStatus == 2) {
       std::pair<char*, int> SWC_Pair = lm.retrieve_data();

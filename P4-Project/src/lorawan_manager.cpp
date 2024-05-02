@@ -42,8 +42,9 @@ int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
     err = 0;
   }
 
-  //modem.setSpreadingFactor(spreadingFactor);
-  //modem.setTxPower(power);
+  int dr = modem.getDataRate();
+
+  Serial.println("DataRate" + String(dr));
 
   // Return Success 1 or Failed 0
   return err;
@@ -64,11 +65,11 @@ int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
   if (err != 0) {
 
     //Delay to Allow Data Downlink
-    for (int j = 0; j<2; j++) { // Check twice with 5 second delay
-      delay(5000);
+    for (int j = 0; j<20; j++) { // Check twice with 5 second delay
+      delay(500);
       if (!modem.available()) {
-        if (j == 1) {
-          return 1; // If no data is received after second check, then return 1 = message sent, no downlink.
+        if (j == 19) {
+          return 1; // If no data is received after last check, then return 1 = message sent, no downlink.
         }
       }
       else {
