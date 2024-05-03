@@ -22,10 +22,9 @@ void setup()
 
   while(true)
   {
-    int err;
     modem.beginPacket();
     modem.print("poop");
-    err = modem.endPacket(true);
+    modem.endPacket(true);
 
     LowPower.deepSleep(30000);
   }
