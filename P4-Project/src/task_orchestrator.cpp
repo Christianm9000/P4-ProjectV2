@@ -123,6 +123,9 @@ Orchestrator::Orchestrator()
         {
             this->sleep(this->minutes);
         }
+        
+        // confirm that the SWC step has been completed. The dm handles getting to the next step internally
+        this->dm.confirm_SWC_state();
     }
 }
 
