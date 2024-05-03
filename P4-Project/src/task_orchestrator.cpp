@@ -4,7 +4,7 @@ Orchestrator::Orchestrator()
     : Sensor(), // Initialize Sensor Manager
       LoRa(),   // Initialize LoRa Manager
       dm(), // Initialize Data Manager
-      adc(this->ADC_VREF, this->SPI_CS)
+      adc(this->ADC_VREF, this->SPI_CS) // Initialize adc
 {  
     // This will run when the IoT device has lost power and resets.
 
@@ -25,8 +25,15 @@ Orchestrator::Orchestrator()
     // setup of the external MCP3201 12-bit ADC, which measures the Voltage across the supercap (SoC)
     this->setup_SoC();
 
+    // Enable Adaptive Data Rate
+    this->LoRa.set_config(true, 5); // 12 and 5 will not be used (further development).
+
     // Join LoRaWAN Network
-    this->LoRa.setup();
+    while (this->LoRa.setup() == 0) {
+
+        // Sleep 2 min if joined fail before retrying.
+        LowPower.deepSleep(120000);
+    }
 
     // Initialization loop. Ensures we dont start 'working' until a SWC has been received.
     while (!this->SWC_received)
@@ -133,10 +140,8 @@ int Orchestrator::sleep(uint16_t minutes)
 {
     // Converting from minutes to millisecond since LowPower.deepsleep() takes millis as argument
     unsigned long sleep_time = minutes * 60000; // unsigned long --> Size (4 bytes) - Range 0 to 4,294,967,295
-    Serial.println("Before Idle");
-    //LowPower.idle(sleep_time);
-    delay(sleep_time);
-    Serial.println("After Idle");
+
+    LowPower.deepSleep(sleep_time);
     return sleep_time;
 }
 
@@ -197,6 +202,14 @@ uint8_t Orchestrator::get_SoC()
 uint8_t Orchestrator::handle_uplink(uint8_t* data, uint8_t packet_size)
 {
     uint8_t send_response = this->LoRa.send_data(data, packet_size);
+    bool SWC_clear = false;
+
+    if(send_response == 2)
+    {
+        SWC_clear = true;
+    }
+
+    dm.reset(SWC_clear);
 
     switch (send_response)
     {

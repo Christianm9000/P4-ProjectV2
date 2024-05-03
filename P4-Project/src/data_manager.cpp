@@ -25,10 +25,11 @@ uint8_t DataManager::reset(bool rst_SWC) {
 
     if (rst_SWC) {
         SWC.clear();
+        SWC_step_num = init_step;   // point to first step of SWC
     }
+    
     compressed_data.clear();    // clear stored data
     num_samples = 0;
-    SWC_step_num = init_step;   // point to first step of SWC
     
     return 1;   // success
 }

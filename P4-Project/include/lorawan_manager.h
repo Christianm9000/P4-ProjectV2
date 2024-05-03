@@ -11,7 +11,6 @@ private:
   String appEui;
   String appKey;
   int TXPower;
-  int SpreadingFactor;
   bool ADR;
 
 public:
@@ -19,13 +18,13 @@ public:
   LoRaWAN(const String& eui = SECRET_APP_EUI, const String& key = SECRET_APP_KEY);
 
   // Join LoRaWAN network with the defined AppEUI and AppKEY
-  void setup();
+  uint8_t setup();
 
   // Configure ADR, spreading factor, and TX power
-  int set_config(bool adr, int spreadingFactor, int power);
+  uint8_t set_config(bool adr, uint8_t power);
 
   // Send data over LoRaWAN and check for downlink messages
-  int send_data(uint8_t* data, uint8_t size);
+  uint8_t send_data(uint8_t* data, uint8_t size);
 
   // Retrieve data received from downlink
   std::pair<char*, uint16_t> retrieve_data();

@@ -14,33 +14,30 @@ LoRaWAN::LoRaWAN(const String& eui, const String& key) {
 }
 
 
-void LoRaWAN::setup() {
+uint8_t LoRaWAN::setup() {
   if (!modem.joinOTAA(this->appEui, this->appKey)) {            // Join Given Network Via OTAA
-    Serial.println("Joining network failed.");
-    while (1);
+    return 0;
   }
 
   Serial.println("Network Joined!");
   modem.minPollInterval(60);              // The Amount of Seconds between checking for downlink. Works as a cooldown. If checked device must wait 60 sec to check again.
+  
+  return 1;
 }
 
 
-int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
+uint8_t LoRaWAN::set_config(bool adr, uint8_t power) {
   // Set Variables
   this->TXPower = power;
-  this->SpreadingFactor = spreadingFactor;
   this->ADR = adr;
 
   // Declare Response Variable
   uint8_t err;
 
   // Enable or Disable ADR and Set Response Variable
-  if(modem.setADR(this->ADR)) {
-    err = 1;
-  }
-  else {
-    err = 0;
-  }
+  modem.setADR(this->ADR);
+  _rf_mode bob;
+  modem.power(bob, power);
 
   int dr = modem.getDataRate();
 
@@ -51,7 +48,7 @@ int LoRaWAN::set_config(bool adr, int spreadingFactor, int power) {
 }
 
 
-int LoRaWAN::send_data(uint8_t* data, uint8_t size) {
+uint8_t LoRaWAN::send_data(uint8_t* data, uint8_t size) {
   // Declare Error Variable
   uint8_t err;
 
