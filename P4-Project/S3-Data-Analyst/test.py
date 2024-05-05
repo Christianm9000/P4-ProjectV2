@@ -9,7 +9,7 @@ offset= -12
 db = config['database']
 conn = pymysql.connect(host=db['host'], user=db['username'], passwd=db['password'], db=db['dbname'])
 cursor = conn.cursor()
-cursor.execute("SELECT ts, data FROM measure_data")
+cursor.execute("SELECT ts, data FROM iot_data WHERE cmd = 'rx'")
 data = cursor.fetchall()
 conn.close()
 times = [datetime.fromtimestamp(row[0] / 1000).replace(microsecond=0) for row in data if row[0]]
@@ -32,11 +32,7 @@ temperature = [bit_string[i:i+7] for bit_string in bits for i in range(0, len(bi
 
 moisture_percentages = [str(round((int(bit_string, 2) / 127) * 100, 0)) + '%' for bit_string in moisture]
 temperature_values = [int(bit_string[:6], 2) - 32 - (offset) + (0.5 if bit_string[-1] == '1' else 0) for bit_string in temperature]
-#print(moisture_percentages)
-#print(temperature_values)
-# Define your desired date and time format
-date_format = "%Y-%m-%d %H:%M:%S"
+print(len(moisture_percentages))
+print(len(temperature_values))
+print(len(timestamps))
 
-# Convert the timestamps to strings and print them
-timestamp_strings = [timestamp.strftime(date_format) for timestamp in timestamps]
-print(timestamp_strings)
