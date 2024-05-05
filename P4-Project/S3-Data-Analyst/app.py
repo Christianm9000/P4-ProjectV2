@@ -21,19 +21,16 @@ def home():
     conn.close()
     times = [datetime.fromtimestamp(row[0] / 1000).replace(microsecond=0) for row in data if row[0]]
     values = [row[1] for row in data if row[1]]
-    numbers = [int(value, 16) for value in values]
-    bits = [bin(number)[2:] for number in numbers]
+    bits = [bin(int(value, 16))[2:].zfill(len(value)*4) for value in values]
     timestamps = []
-    for time, value in zip(times, values):
-        number_of_measurements = len(bin(int(value, 16))[2:]) // 7
-        timestamps.extend([time - timedelta(minutes=30*i) for i in range(number_of_measurements-1, -1, -1)])
-
+    for time, bit_string in zip(times, bits):
+        number_of_measurements = len(bit_string) // 14
+        timestamps.extend([time - timedelta(minutes=30*i) for i in range(number_of_measurements)])
     moisture = [bit_string[i:i+7] for bit_string in bits for i in range(0, len(bit_string), 7) if len(bit_string[i:i+7]) == 7 and (i // 7) % 2 == 0]
     temperature = [bit_string[i:i+7] for bit_string in bits for i in range(0, len(bit_string), 7) if len(bit_string[i:i+7]) == 7 and (i // 7) % 2 != 0]
 
     moisture_percentages = [str(round((int(bit_string, 2) / 127) * 100, 0)) + '%' for bit_string in moisture]
     temperature_values = [int(bit_string[:6], 2) - 32 - (offset) + (0.5 if bit_string[-1] == '1' else 0) for bit_string in temperature]
-
     fig = make_subplots(rows=1, cols=1, specs=[[{'secondary_y': True}]])
     fig.add_trace(go.Scatter(x=timestamps, y=moisture_percentages, mode='lines', marker=dict(color='green'), name='Moisture Percentage'), row=1, col=1, secondary_y=False)
     fig.add_trace(go.Scatter(x=timestamps, y=temperature_values, mode='lines', marker=dict(color='orange'), name='Temperature'), row=1, col=1, secondary_y=True)
