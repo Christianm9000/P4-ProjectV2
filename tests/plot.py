@@ -1,26 +1,59 @@
-import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
-file1 = "tx_check_downlink%adr.csv"
-file2 = "tx_check_downlink+adr.csv"
-df1 = pd.read_csv(file1)
-df2 = pd.read_csv(file2)
-x = df1["Timestamp(ms)"]
-y1 = df1["Current(uA)"] / 1000
-y2 = df2["Current(uA)"] / 1000
-fig, ax1 = plt.subplots(figsize=(16, 9))
-color = 'tab:red'
-ax1.set_xlabel('Timestamp (ms)')
-ax1.set_ylabel('Current (mA) - Without ADR', color=color)
-ax1.plot(x, y1, color=color)
-ax1.tick_params(axis='y', labelcolor=color)
-ax2 = ax1.twinx()  
-color = 'tab:green'
-ax2.set_ylabel('Current (mA) - With ADR', color=color)  
-ax2.plot(x, y2, color=color)
-ax2.tick_params(axis='y', labelcolor=color)
-ax1.grid(True)
-ax2.grid(True)
-fig.tight_layout()  
-plt.savefig("milliamps_draw.png", dpi=500)
+# Given data
+data = [(0, 4.5), (5, 4.38), (10, 4.33), (15, 4.30), (20, 4.28), (40, 4.25), (50, 4.23), (80, 4.20)]
+
+# Extracting the min and V values
+min_values = np.array([point[0] for point in data])
+V_values = np.array([point[1] for point in data])
+
+# Define the exponential decay model function
+def exponential_decay(x, V0, k):
+    return V0 * np.exp(-k * x)
+
+# Initial guess for the parameters V0 and k
+initial_guess = (V_values[0], 0.01)
+
+# Fit the model to the data
+params, covariance = curve_fit(exponential_decay, min_values, V_values, p0=initial_guess)
+
+# Extract the parameters
+V0, k = params
+
+# Print the fitted parameters
+print(f"Fitted parameters: V0 = {V0}, k = {k}")
+
+# Define a very small voltage value to find when it reaches "zero"
+very_small_voltage = 1e-6
+
+# Calculate the time at which the voltage is approximately zero
+time_to_zero = np.log(very_small_voltage / V0) / -k
+print(f"Time to reach approximately zero voltage: {time_to_zero} minutes")
+
+# Generate points for plotting the fitted curve
+min_fit = np.linspace(0, time_to_zero, 500)
+V_fit = exponential_decay(min_fit, V0, k)
+
+# Create the plot with a 16:9 aspect ratio
+plt.figure(figsize=(16, 9))
+
+# Plot the data points
+plt.scatter(min_values, V_values, label='Data', color='red')
+
+# Plot the fitted exponential decay curve
+plt.plot(min_fit, V_fit, label='Fitted Curve', color='blue')
+
+# Plot the time to reach approximately zero voltage
+plt.axvline(x=time_to_zero, color='green', linestyle='--', label='Time to 0 Voltage')
+
+# Add labels and legend
+plt.xlabel('Time (min)')
+plt.ylabel('Voltage (V)')
+plt.title('Exponential Decay Fit')
+plt.legend()
+plt.grid(True)
+
+# Show the plot
 plt.show()
