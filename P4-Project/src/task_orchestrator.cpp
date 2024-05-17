@@ -29,7 +29,15 @@ Orchestrator::Orchestrator()
     this->LoRa.set_config(true, 5); // 12 and 5 will not be used (further development).
 
     // Join LoRaWAN Network
-    while (this->LoRa.setup() == 0) {
+    while (true) {
+        // Get State of charge
+        this->get_SoC()
+
+        // If we have enough power to transmit
+        if (this->transmit_power_req < this->SoC) {
+            if (this->LoRa.setup() != 0) {
+                break;
+            }
 
         // Sleep 2 min if joined fail before retrying.
         LowPower.deepSleep(120000);
@@ -142,7 +150,7 @@ int Orchestrator::sleep(uint16_t minutes)
     unsigned long sleep_time = minutes * 60000; // unsigned long --> Size (4 bytes) - Range 0 to 4,294,967,295
 
     LowPower.deepSleep(sleep_time);
-    return sleep_time;
+    return 1;
 }
 
 void Orchestrator::make_measurements(bool dummy)
