@@ -1,10 +1,10 @@
 #include "task_orchestrator.h"
 
 Orchestrator::Orchestrator() 
-    : Sensor(), // Initialize Sensor Manager
+    : adc(this->ADC_VREF, this->SPI_CS), // Initialize adc
+      Sensor(), // Initialize Sensor Manager
       LoRa(),   // Initialize LoRa Manager
-      dm(), // Initialize Data Manager
-      adc(this->ADC_VREF, this->SPI_CS) // Initialize adc
+      dm() // Initialize Data Manager
 {  
     // This will run when the IoT device has lost power and resets.
 
@@ -18,7 +18,7 @@ Orchestrator::Orchestrator()
     // this->SoC;                                  // Voltage across Supercap in mv.
     // this->Min_SoC;                              // Minimum voltage required on the supercap to ensure the board is powered through boost converter.
 
-    uint8_t* dummy_Data_array = new uint8_t[1, 1, 1, 1];
+    uint8_t dummy_Data_array[4] = {1, 1, 1, 1};
     uint8_t dummy_Data_size = 4;
     bool dummy = true;
     
@@ -31,15 +31,16 @@ Orchestrator::Orchestrator()
     // Join LoRaWAN Network
     while (true) {
         // Get State of charge
-        this->get_SoC()
+        this->get_SoC();
 
         // If we have enough power to transmit
         if (this->transmit_power_req < this->SoC) {
             if (this->LoRa.setup() != 0) {
                 break;
             }
+        }
 
-        // Sleep 2 min if joined fail before retrying.
+        // Sleep 2 min if join fails before retrying.
         LowPower.deepSleep(120000);
     }
 
@@ -65,7 +66,6 @@ Orchestrator::Orchestrator()
             this->sleep(2);
         }
     }
-
 
     // Enter Run Loop
     while(true) 
