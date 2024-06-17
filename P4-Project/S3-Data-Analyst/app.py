@@ -50,9 +50,19 @@ def home():
         timestamps.extend([time - timedelta(minutes=30 * i) for i in range(number_of_measurements)])
     
     # Extract moisture and temperature bit strings
-    moisture = [bit_string[i:i + 7] for bit_string in bits for i in range(0, len(bit_string), 7) if len(bit_string[i:i + 7]) == 7 and (i // 7) % 2 == 0]
-    temperature = [bit_string[i:i + 7] for bit_string in bits for i in range(0, len(bit_string), 7) if len(bit_string[i:i + 7]) == 7 and (i // 7) % 2 != 0]
+    #moisture = [bit_string[i:i + 7] for bit_string in bits for i in range(0, len(bit_string), 7) if len(bit_string[i:i + 7]) == 7 and (i // 7) % 2 == 0]
+    #temperature = [bit_string[i:i + 7] for bit_string in bits for i in range(0, len(bit_string), 7) if len(bit_string[i:i + 7]) == 7 and (i // 7) % 2 != 0]
+    moisture = []
+    temperature = []
 
+    for bit_string in bits:
+        for i in range(0, len(bit_string), 7):
+            chunk = bit_string[i:i + 7]
+            if len(chunk) == 7:
+                if (i // 7) % 2 == 0:
+                    moisture.append(chunk)
+                else:
+                    temperature.append(chunk)
     # Convert moisture data to percentage
     moisture_percentages = [str(round((int(bit_string, 2) / 127) * 100, 0)) + '%' for bit_string in moisture]
     
