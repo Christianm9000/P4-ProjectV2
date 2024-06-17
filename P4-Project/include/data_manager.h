@@ -28,7 +28,7 @@ private:
     // offset the temperature data conversion range negatively to [(-32.0 - offset), (31.5 - offset)]
     float offset;
 
-    // array containing compressed measurement data
+    // vector containing compressed measurement data
     std::vector<uint8_t> compressed_data;
 
     // keep track of number of samples/size of 'compressed_data'
